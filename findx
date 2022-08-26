@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+# coding: utf-8
+# Author dev.rcastrucci.com
+# Github https://github.com/rcastrucci/findx
+
+import sys
+import time
+import os
+from os.path import exists
+
+
+colors = []
+options = ["help", "find", "count", "search"]
+message = {"invalid": "Invalid arguments",
+           "missing": "Missing arguments, type -help for more information",
+           "ops": "Ops something went wrong",
+           "notfound": "File {} not found or not a text file",
+           "exists": "File {} already exists!",
+           "replace": "Would you like to replace, Y/N? ",
+           "delete": "Would you like to delete key {}, Y/N? ",
+           "save": "Save changes in key {}, Y/N? ",
+           "deleteok": "Key {} deleted!",
+           "nochange": "Aborted! Nothing was changed",
+           "abort": "Data creation aborted",
+           "success": "Successfully saved!"}
+
+
+class Color:
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    DARKCYAN = "\033[36m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+    END = "\033[0m"
+
+
+class Count:
+    directory = 0;
+    file = 0;
+    line = 0;
+    word = 0;
+    letter = 0;
+
+
+def display_help():
+    print("\nusage: wordy -function [filename]\n")
+    print("functions:\n")
+    print("-h   |  -help        display these options")
+    print("-f   |  -find        use to find a content in a json file")
+    print("-c   |  -count       use to count total of words in document")
+    print("-s   |  -search      use to search a file into a path")
+    print("")
+    print("ATTENTION!           if no functions are specified wordy will try to compress file into same path with extension .wdy\n")
+
+
+def is_binary(filename):
+    try:
+        with open(filename, "r") as f:
+            for l in f:
+                return False;
+    except UnicodeDecodeError:
+        return True;
+
+
+def count_words(filename):
+    if (os.path.isdir(filename)):
+        print("This is a directory!");
+    else:
+        if (exists(filename) and not is_binary(filename)):
+            with open(filename, "r") as file:
+                # reading each line    
+                for line in file:
+                    Count.line += 1;
+                    # reading each word        
+                    for word in line.split():
+                        Count.word += 1;
+                        for letter in word:
+                            # reading each letter
+                            Count.letter += 1;
+
+            if (Count.word <= 0):
+                print(Color.RED + "No words found in {}".format(filename) + Color.END)
+            else:
+                print("-" * 17)
+                print(Color.GREEN + "Found {} letters in {} words splited in {} lines".format(Count.letter, Count.word, Count.line) + Color.END)
+                print("-" * 17)
+        else:
+            print(Color.RED + message["notfound"].format(filename) + Color.END)
+
+
+def find_file(name, path):
+    
+    match = []
+    similar = []
+    start = time.time()
+
+    for root, dirs, files in os.walk(path):
+        Count.directory += 1;
+        Count.file += len(files);
+        if name in files:
+            match.append(os.path.join(root, name))
+        else:
+            for filename in files:
+                if (name in filename):
+                    similar.append(os.path.join(root, filename));
+
+
+    end = time.time() - start;
+    print(Color.DARKCYAN + "Time elapsed: {:.2f}s".format(end)+Color.END);
+    print(Color.CYAN + "Read {} files in {} directories".format(Count.file, Count.directory) + Color.END)
+    print(Color.GREEN + "Exact matchs: {}".format(len(match)) + Color.END);
+    if (len(match) > 0):
+        for m in match:
+            print(m);
+    print(Color.YELLOW + "Similiar matchs: {}".format(len(similar)) + Color.END);
+    if (len(similar) > 0):
+        for s in similar:
+            print(s);
+
+
+def find_word(filename, w):
+
+    if (os.path.isdir(filename)):
+        print("This is a directory, try to use the recursively find!");
+    else:
+        if (exists(filename) and not is_binary(filename)):
+            with open(filename, "r") as file:
+                for line in file:
+                    Count.line += 1;
+                    Count.letter = 0;
+                    for word in line.split():
+                        for letter in word:
+                            Count.letter += 1;
+                        if (w.lower() in word.lower()):
+                            Count.word += 1;
+                            print(Color.YELLOW + "Found in line {} position {}".format(Count.line, (Count.letter - len(word))) + Color.END)
+            if (Count.word <= 0):
+                print(Color.RED + "No words found in {}".format(filename) + Color.END)
+            else:
+                print("-" * 17)
+                print(Color.GREEN + "Found {} words".format(Count.word) + Color.END)
+                print("-" * 17)
+        else:
+            print(Color.RED + message["notfound"].format(filename) + Color.END)
+
+
+def check_args():
+    if len(sys.argv) > 1:
+        if sys.argv[1].upper() == "-H" or sys.argv[1].upper() == "-HELP" or sys.argv[1].upper() == "HELP":
+            return [options[0], True]
+        elif sys.argv[1].upper() == "-F" or sys.argv[1].upper() == "-FIND" or sys.argv[1].upper() == "FIND":
+            if (len(sys.argv) > 2):
+                return [options[1], sys.argv]
+            else:
+                return [False, False]
+        elif sys.argv[1].upper() == "-C" or sys.argv[1].upper() == "-COUNT" or sys.argv[1].upper() == "COUNT":
+            if (len(sys.argv) > 2):
+                return [options[2], sys.argv]
+            else:
+                return [False, False]
+        elif sys.argv[1].upper() == "-S" or sys.argv[1].upper() == "-SEARCH" or sys.argv[1].upper() == "SEARCH":
+            if (len(sys.argv) > 2):
+                return [options[3], sys.argv]
+            else:
+                return [False, False]
+        else:
+            return [True, False]
+    else:
+        return [False, False]
+
+
+def start(args):
+    if args[0] and args[1]:
+        # ******************** HELP ******************** #
+        if args[0] == options[0]:
+            display_help();
+        # ******************** FIND ******************** #
+        elif args[0] == options[1]:
+            filename = args[1][2];
+            # Execute query
+            if (len(args[1]) > 3):
+                query = args[1][3].replace("%", " ");
+                find_word(filename, query);
+        # ******************** COUNT ******************** #
+        elif args[0] == options[2]:
+            filename = args[1][2];
+            # Execute query
+            count_words(filename);
+        # ****************** FIND FILES ***************** #
+        elif args[0] == options[3]:
+            filename = args[1][2];
+            # Execute query
+            if (len(args[1]) > 3):
+                path = args[1][3];
+                print("Looking for file: {} in path: {}".format(filename, path));
+                find_file(filename, path);
+        # ******************** END ******************** #
+    elif args[0] and not args[1]:
+        # Error 1
+        print(message["invalid"]);
+    else:
+        # Error 2
+        print(message["missing"]);
+
+
+start(check_args());

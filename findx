@@ -47,14 +47,14 @@ class Count:
 
 
 def display_help():
-    print("\nusage: wordy -function [filename]\n")
+    print("\nusage: findx -function [filename]\n")
     print("functions:\n")
     print("-h   |  -help        display these options")
     print("-f   |  -find        use to find a content in a json file")
     print("-c   |  -count       use to count total of words in document")
     print("-s   |  -search      use to search a file into a path")
     print("")
-    print("ATTENTION!           if no functions are specified wordy will try to compress file into same path with extension .wdy\n")
+    print("ATTENTION!           if no functions are specified findx will try to compress file into same path with extension .fdx\n")
 
 
 def is_binary(filename):
